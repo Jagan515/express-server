@@ -1,7 +1,14 @@
+require('dotenv').config(); // npm install dotenv 
+
 const express = require('express'); 
 // require() is used to import dependencies in CommonJS (Node.js).
 // It loads only what is needed, helping keep applications lightweight.
+const mongoose=require('mongoose');
 const authRoutes=require('./src/routes/authRouter')
+
+mongoose.connect(process.env.MONGO_DB_CONNECTION_URL) // mongoose 27017 default port
+.then(()=> console.log('MongoDB Connected'))
+.catch((error)=> console.log('Could not connect MongoDB..',error));
 
 const app = express();
 

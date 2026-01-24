@@ -1,6 +1,7 @@
 # MongoDB – Conceptual Notes
 
-## 1. What is MongoDB?
+## 1. What is MongoDB?  npm install mongose
+
 
 MongoDB is a **NoSQL, document-oriented database** designed to store data in a flexible, schema-less format. Unlike relational databases that use tables and rows, MongoDB stores data as **documents inside collections**.
 
