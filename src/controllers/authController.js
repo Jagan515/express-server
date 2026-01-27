@@ -1,5 +1,6 @@
 const usersDao = require('../dao/userDao');
-const bcrypt=require('bcryptjs'); // npm install bcryptjs
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const authController = {
 
@@ -15,20 +16,39 @@ const authController = {
 
         const user = await usersDao.findByEmail(email);
 
-
-
-        const isPasswordMatch=await bcrypt.compare(password,user.password);
-
-        if (user && isPasswordMatch) {
-            return res.status(200).json({
-                message: "Login successful",
-                userId: user._id
-            });
-        } else {
+        if (!user) {
             return res.status(401).json({
                 error: "Invalid credentials"
             });
         }
+
+        const isPasswordMatch = await bcrypt.compare(password, user.password);
+
+        if (!isPasswordMatch) {
+            return res.status(401).json({
+                error: "Invalid credentials"
+            });
+        }
+
+        // CREATE JWT
+        const token = jwt.sign(
+            { userId: user._id, email: user.email },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+
+        //  SET COOKIE
+        res.cookie('jwtToken', token, {
+            httpOnly: true,
+            secure: false, // true only in HTTPS
+            sameSite: 'strict'
+        });
+
+        //  SEND RESPONSE
+        return res.status(200).json({
+            message: "Login successful"
+            
+        });
     },
 
     // REGISTER FUNCTION
@@ -49,15 +69,13 @@ const authController = {
             });
         }
 
-
-        const salt= await bcrypt.genSalt(10);
-        const hashedPassword=await bcrypt.hash(password,salt);
-
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
 
         const newUser = await usersDao.create({
-            username:username,
-            email:email,
-            password:hashedPassword
+            username: username,
+            email: email,
+            password: hashedPassword
         });
 
         return res.status(201).json({
