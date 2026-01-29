@@ -7,12 +7,25 @@ const mongoose=require('mongoose');
 const authRoutes=require('./src/routes/authRoutes');
 const groupRoutes=require('./src/routes/groupRoutes');
 const cookieparser=require('cookie-parser');
+const cors=require('cors');
 
 mongoose.connect(process.env.MONGO_DB_CONNECTION_URL) // mongoose 27017 default port
 .then(()=> console.log('MongoDB Connected'))
 .catch((error)=> console.log('Could not connect MongoDB..',error));
 
+const corsOption={
+    origin:process.env.CLIENT_URL,
+    credentials:true
+};
+
+
+
+
+
 const app = express();
+
+
+app.use(cors(corsOption));
 
 
 // Middleware to parse incoming JSON requests into JavaScript objects
