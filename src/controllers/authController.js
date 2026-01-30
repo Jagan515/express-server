@@ -5,11 +5,11 @@ const jwt = require('jsonwebtoken');
 const authController = {
 
     // LOGIN FUNCTION
-    login: async (req, res) => {
-        const { email, password } = req.body;
+    login: async (request, response) => {
+        const { email, password } = request.body;
 
         if (!email || !password) {
-            return res.status(400).json({
+            return response.status(400).json({
                 error: "Email and Password are required"
             });
         }
@@ -17,7 +17,7 @@ const authController = {
         const user = await usersDao.findByEmail(email);
 
         if (!user) {
-            return res.status(401).json({
+            return response.status(401).json({
                 error: "Invalid credentials"
             });
         }
@@ -25,38 +25,35 @@ const authController = {
         const isPasswordMatch = await bcrypt.compare(password, user.password);
 
         if (!isPasswordMatch) {
-            return res.status(401).json({
+            return response.status(401).json({
                 error: "Invalid credentials"
             });
         }
 
-        // CREATE JWT
         const token = jwt.sign(
-            { userId: user._id, email: user.email },
+            { userId: user._id, name: user.name, email: user.email },
             process.env.JWT_SECRET,
             { expiresIn: '1h' }
         );
 
-        //  SET COOKIE
-        res.cookie('jwtToken', token, {
+        response.cookie('jwtToken', token, {
             httpOnly: true,
-            secure: false, // true only in HTTPS
+            secure: false,
             sameSite: 'strict'
         });
 
-        //  SEND RESPONSE
-        return res.status(200).json({
-            message: "Login successful"
-            
+        return response.status(200).json({
+            message: "Login successful",
+            user: user
         });
     },
 
     // REGISTER FUNCTION
-    register: async (req, res) => {
-        const { username, email, password } = req.body;
+    register: async (request, response) => {
+        const { name, email, password } = request.body;
 
-        if (!username || !email || !password) {
-            return res.status(400).json({
+        if (!name || !email || !password) {
+            return response.status(400).json({
                 error: "All fields are required"
             });
         }
@@ -64,7 +61,7 @@ const authController = {
         const userExists = await usersDao.findByEmail(email);
 
         if (userExists) {
-            return res.status(409).json({
+            return response.status(409).json({
                 error: "User already exists"
             });
         }
@@ -73,15 +70,58 @@ const authController = {
         const hashedPassword = await bcrypt.hash(password, salt);
 
         const newUser = await usersDao.create({
-            username: username,
-            email: email,
+            name,
+            email,
             password: hashedPassword
         });
 
-        return res.status(201).json({
-            message: "User registered successfully",
-            userId: newUser._id
+        return response.status(201).json({
+        message: "User registered successfully",
+        user: {
+            id: newUser._id,
+            name: newUser.name,
+            email: newUser.email
+        }
         });
+
+    },
+
+    // CHECK LOGIN
+    isUserLoggedIn: async (request, response) => {
+        try {
+            const token = request.cookies?.jwtToken;
+            if (!token) {
+                return response.status(401).json({ message: "Not authenticated" });
+            }
+
+            jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+                if (err) {
+                    return response.status(401).json({ message: "Invalid token" });
+                }
+
+                return response.status(200).json({
+                    user: {
+                        id: user._id,
+                        name: user.name,
+                        email: user.email
+                    }
+                });
+            });
+        } catch (err) {
+            console.log("Error in isUserLoggedIn:", err);
+            return response.status(500).json({ message: "Internal server error" });
+        }
+    },
+
+    // LOGOUT
+    logout: async (request, response) => {
+        try {
+            response.clearCookie('jwtToken');
+            return response.json({ message: 'Logout successful' });
+        } catch (error) {
+            console.error(error);
+            return response.status(500).json({ message: "Logout failed" });
+        }
     }
 };
 
