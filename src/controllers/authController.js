@@ -2,6 +2,8 @@ const usersDao = require('../dao/userDao');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
+const emailService = require('../services/emailService');
+
 
 const authController = {
 
@@ -191,7 +193,119 @@ const authController = {
         message: 'Internal server error'
       });
     }
+  },
+  // RESET PASSWORD - SEND OTP
+resetPassword: async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ msg: "Email is required" });
+    }
+
+    const user = await usersDao.findByEmail(email);
+
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    const now = Date.now();
+
+    // ⏳ RATE LIMIT: 1 request per 2 minutes
+    if (
+      user.resetPasswordLastRequestedAt &&
+      now - user.resetPasswordLastRequestedAt.getTime() < 2 * 60 * 1000
+    ) {
+      return res.status(429).json({
+        msg: "Please wait 2 minutes before requesting again"
+      });
+    }
+
+    // generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // update user ONCE
+    user.resetOtp = otp;
+    user.resetOtpExpiry = now + 10 * 60 * 1000;
+    user.resetPasswordLastRequestedAt = now;
+
+    await user.save(); //  single save
+
+    //  respond immediately (FAST UX)
+    res.status(200).json({ msg: "OTP sent to email" });
+
+    // send email in background (NON-BLOCKING)
+    emailService
+      .send(
+        email,
+        "Password Reset OTP",
+        `Your OTP is ${otp}. Valid for 10 minutes.`
+      )
+      .catch(err => {
+        console.error("Email send failed:", err);
+      });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ msg: "Internal server error" });
   }
+},
+
+
+// CHANGE PASSWORD - VERIFY OTP
+changePassword: async (request, response) => {
+  try {
+    const { email, otp, newPassword } = request.body;
+
+    if (!email || !otp || !newPassword) {
+      return response.status(400).json({
+        msg: "All fields are required"
+      });
+    }
+
+    const user = await usersDao.findByEmail(email);
+
+    if (!user) {
+      return response.status(404).json({
+        msg: "User not found"
+      });
+    }
+
+    // verify otp
+    if (
+      user.resetOtp !== otp ||
+      user.resetOtpExpiry < Date.now()
+    ) {
+      return response.status(400).json({
+        msg: "Invalid or expired OTP"
+      });
+    }
+
+    // hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    user.password = hashedPassword;
+
+    // clear otp after success
+    user.resetOtp = undefined;
+    user.resetOtpExpiry = undefined;
+
+    await user.save();
+
+    return response.status(200).json({
+      msg: "Password updated successfully"
+    });
+
+  } catch (error) {
+    console.log("Change password error:", error);
+    return response.status(500).json({
+      msg: "Internal server error"
+    });
+  }
+},
+
+
 };
 
 module.exports = authController;

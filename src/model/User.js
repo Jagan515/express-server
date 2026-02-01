@@ -1,10 +1,14 @@
 const mongoose=require('mongoose');
 
 const userSchema=new mongoose.Schema({
-    name:{type:String,required:true},
+    name:{type:String},
     email:{type:String,required:true,unique:true},
-    password:{type:String,required:false},
-    googleId:{type:String,required:false}
+    password:{type:String},
+    googleId:{type:String,required:false},
+    resetOtp: { type: String },
+    resetOtpExpiry: { type: Date },
+    resetPasswordLastRequestedAt: { type: Date }
+
 });
 
 
