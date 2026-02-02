@@ -4,19 +4,22 @@ const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const emailService = require('../services/emailService');
 
+const {validationResult}=require('express-validator');
 
 const authController = {
 
   // LOGIN FUNCTION
   login: async (request, response) => {
+
+    const errors=validationResult(request);
     const { email, password } = request.body;
 
-    if (!email || !password) {
+    if(!errors.isEmpty()){
       return response.status(400).json({
-        error: "Email and Password are required"
+        errors:errors.array()
       });
     }
-
+    
     const user = await usersDao.findByEmail(email);
 
     if (!user) {
@@ -254,14 +257,18 @@ resetPassword: async (req, res) => {
 
 // CHANGE PASSWORD - VERIFY OTP
 changePassword: async (request, response) => {
-  try {
-    const { email, otp, newPassword } = request.body;
 
-    if (!email || !otp || !newPassword) {
+  try {
+    const errors = validationResult(request);
+
+    if (!errors.isEmpty()) {
       return response.status(400).json({
-        msg: "All fields are required"
+        errors: errors.array()
       });
     }
+    const { email, otp, newPassword } = request.body;
+
+   
 
     const user = await usersDao.findByEmail(email);
 
