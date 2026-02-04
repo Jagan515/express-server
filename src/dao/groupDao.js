@@ -2,7 +2,7 @@ const Group = require('../model/group');
 
 const groupDao = {
 
-    createdGroup: async (data) => {
+    createGroup: async (data) => {
         const newGroup = new Group(data);
         return await newGroup.save();
     },
@@ -36,9 +36,12 @@ const groupDao = {
         return await Group.find({ membersEmail: email });
     },
 
-    getGroupByStatus: async (status) => {
-        return await Group.find({ "paymentStatus.isPaid": status });
+    getGroupByStatusAndEmail: async (email, status) => {
+    return await Group.find({
+        membersEmail: email,
+        "paymentStatus.isPaid": status });
     },
+
 
     /**
      * Returns audit/settlement information

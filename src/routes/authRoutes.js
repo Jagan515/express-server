@@ -19,4 +19,3 @@ router.post("/change-password", resetPasswordValidator,authController.changePass
 
 
 module.exports = router;  
-

@@ -34,7 +34,7 @@ app.use(cookieparser());//Middleware
 
 
 app.use('/auth',authRoutes);
-app.use('/group',groupRoutes);
+app.use('/groups',groupRoutes);
 
 
 

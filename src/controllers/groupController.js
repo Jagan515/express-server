@@ -2,6 +2,7 @@ const groupDao = require("../dao/groupdao");
 
 const groupController = {
 
+    // POST /create
     create: async (request, response) => {
         try {
             const user = request.user;
@@ -12,7 +13,7 @@ const groupController = {
                 allMembers = [...new Set([...allMembers, ...membersEmail])];
             }
 
-            const newGroup = await groupDao.createdGroup({
+            const newGroup = await groupDao.createGroup({
                 name,
                 description,
                 adminEmail: user.email,
@@ -26,79 +27,103 @@ const groupController = {
                 }
             });
 
-            return response.status(200).json({
-                message: 'Group created',
+            return response.status(201).json({
+                message: "Group created",
                 groupId: newGroup._id
             });
 
         } catch (error) {
-            console.log(error);
+            console.error(error);
             return response.status(500).json({ message: "Internal server error" });
         }
     },
 
-    updateGroup: async (request, response) => {
+    // PUT /update
+    update: async (request, response) => {
         try {
-            const group = await groupDao.updateGroup(request.body);
-            return response.status(200).json(group);
+            const updatedGroup = await groupDao.updateGroup(request.body);
+
+            if (!updatedGroup) {
+                return response.status(404).json({ message: "Group not found" });
+            }
+
+            return response.status(200).json(updatedGroup);
+
         } catch (error) {
-            console.log(error);
-            return response.status(500).json({ message: "Internal server error" });
+            console.error(error);
+            return response.status(500).json({ message: "Error updating group" });
         }
     },
 
+    // PATCH /members/add
     addMembers: async (request, response) => {
         try {
-            const { groupId, membersEmail } = request.body;
-            const group = await groupDao.addMembers(groupId, ...membersEmail);
-            return response.status(200).json(group);
+            const { groupId, emails } = request.body;
+
+            const updatedGroup = await groupDao.addMembers(groupId, ...emails);
+            return response.status(200).json(updatedGroup);
+
         } catch (error) {
-            console.log(error);
-            return response.status(500).json({ message: "Internal server error" });
+            console.error(error);
+            return response.status(500).json({ message: "Error adding members" });
         }
     },
 
+    // PATCH /members/remove
     removeMembers: async (request, response) => {
         try {
-            const { groupId, membersEmail } = request.body;
-            const group = await groupDao.removeMembers(groupId, ...membersEmail);
-            return response.status(200).json(group);
+            const { groupId, emails } = request.body;
+
+            const updatedGroup = await groupDao.removeMembers(groupId, ...emails);
+            return response.status(200).json(updatedGroup);
+
         } catch (error) {
-            console.log(error);
-            return response.status(500).json({ message: "Internal server error" });
+            console.error(error);
+            return response.status(500).json({ message: "Error removing members" });
         }
     },
 
-    getGroupByEmail: async (request, response) => {
+    // GET /my-groups
+    getGroupsByUser: async (request, response) => {
         try {
-            const { email } = request.params;
+            const email = request.user.email;
+
             const groups = await groupDao.getGroupByEmail(email);
             return response.status(200).json(groups);
+
         } catch (error) {
-            console.log(error);
-            return response.status(500).json({ message: "Internal server error" });
+            console.error(error);
+            return response.status(500).json({ message: "Error fetching groups" });
         }
     },
 
-    getGroupByStatus: async (request, response) => {
+    // GET /status?isPaid=true|false
+    getGroupsByPaymentStatus: async (request, response) => {
         try {
-            const { status } = request.params;
-            const groups = await groupDao.getGroupByStatus(status === 'true');
+            const { isPaid } = request.query;
+            const status = isPaid === 'true';
+
+           const email = request.user.email;
+           const groups = await groupDao.getGroupByStatusAndEmail(email, status);
             return response.status(200).json(groups);
+
         } catch (error) {
-            console.log(error);
-            return response.status(500).json({ message: "Internal server error" });
+            console.error(error);
+            return response.status(500).json({ message: "Error filtering groups" });
         }
     },
 
-    getAuditLog: async (request, response) => {
+    // GET /:groupId/audit
+    getAudit: async (request, response) => {
         try {
             const { groupId } = request.params;
-            const auditLog = await groupDao.getAuditLog(groupId);
-            return response.status(200).json(auditLog);
+
+            const lastSettled = await groupDao.getAuditLog(groupId);
+            return response.status(200).json({ lastSettled });
+
         } catch (error) {
-            console.log(error);
-            return response.status(500).json({ message: "Internal server error" });
+            console.error(error);
+            return response.status(500).json({ message: "Error fetching audit log" });
         }
     }
 };
