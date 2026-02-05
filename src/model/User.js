@@ -7,7 +7,9 @@ const userSchema=new mongoose.Schema({
     googleId:{type:String,required:false},
     resetOtp: { type: String },
     resetOtpExpiry: { type: Date },
-    resetPasswordLastRequestedAt: { type: Date }
+    resetPasswordLastRequestedAt: { type: Date },
+    role:{type:String,required:true},
+    adminId:{type:mongoose.Schema.Types.ObjectId,ref:'User',index:true}
 
 });
 

@@ -1,31 +1,39 @@
+const { body, validationResult } = require('express-validator');
 
-const {body}=require('express-validator');
-const loginValidator=[
-    body('email').notEmpty().withMessage("Email is required")
-                .isEmail().withMessage("Provide email is not valid"),
-    body('password').notEmpty().withMessage("Password is required")
-                .isLength({min:3}).withMessage("Password must be atleast 3 character "),
-
+const loginRules = [
+    body('email').notEmpty().isEmail(),
+    body('password').notEmpty().isLength({ min: 3 })
 ];
 
-
-const resetPasswordValidator = [
-    body('email')
-        .notEmpty().withMessage("Email is required")
-        .isEmail().withMessage("Provide email is not valid"),
-        
-
-    body('otp')
-        .notEmpty().withMessage("OTP is required")
-        .isLength({ min: 6, max: 6 }).withMessage("OTP must be 6 digit")
-        .isNumeric().withMessage("OTP must be numeric"),
-
-    body('password')
-        .notEmpty().withMessage("Password is required")
-        .isLength({ min: 3 }).withMessage("Password must be atleast 3 character"),
+const resetPasswordRules = [
+    body('email').notEmpty().isEmail(),
+    body('otp').notEmpty().isNumeric().isLength({ min: 6, max: 6 }),
+    body('newPassword').notEmpty().isLength({ min: 3 })
 ];
 
+const loginValidator = async (req, res, next) => {
+    for (const rule of loginRules) {
+        await rule.run(req);
+    }
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+    next();
+};
 
+const resetPasswordValidator = async (req, res, next) => {
+    for (const rule of resetPasswordRules) {
+        await rule.run(req);
+    }
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+    next();
+};
 
-
-module.exports={loginValidator,resetPasswordValidator};
+module.exports = {
+    loginValidator,
+    resetPasswordValidator
+};
