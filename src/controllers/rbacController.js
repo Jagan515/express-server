@@ -10,7 +10,6 @@ const rbacController = {
             const adminUser = request.user;
             const { name, email, role } = request.body;
 
-          
             if (!Object.values(USER_ROLES).includes(role)) {
                 return response.status(400).json({
                     message: "Invalid role"
@@ -27,7 +26,7 @@ const rbacController = {
                 name,
                 role,
                 password: hashedPassword,
-                _id: adminUser._id
+                adminId: adminUser._id
             });
 
             try {
@@ -50,8 +49,16 @@ const rbacController = {
 
         } catch (error) {
             console.log(error);
+
+            if (error.code === 11000) {
+                return response.status(409).json({
+                    message: "Email already exists"
+                });
+            }
+
             response.status(500).json({ message: "Internal server error" });
         }
+
     },
 
     update: async (request, response) => {
@@ -87,7 +94,8 @@ const rbacController = {
 
     getAllUsers: async (request, response) => {
         try {
-            const adminId = request.user.adminId; // kept as-is
+            
+            const adminId = request.user._id;
             const users = await rbacDao.getUsersByAdminId(adminId);
 
             return response.status(200).json({

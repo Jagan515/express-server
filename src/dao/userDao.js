@@ -6,7 +6,7 @@ const userDao = {
     return user;
   },
 
-  // ✅ ADD THIS FUNCTION
+  //  ADD THIS FUNCTION
   findById: async (id) => {
     const user = await User.findById(id);
     return user;

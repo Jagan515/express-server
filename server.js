@@ -7,6 +7,9 @@ const mongoose=require('mongoose');
 const authRoutes=require('./src/routes/authRoutes');
 const groupRoutes=require('./src/routes/groupRoutes');
 const cookieParser = require('cookie-parser');
+const expenseRoutes = require('./src/routes/expenseRoutes');
+
+
 
 const cors=require('cors');
 const rbacRoutes = require('./src/routes/rbacRoutes');
@@ -38,7 +41,8 @@ app.use(cookieParser());//Middleware
 
 app.use('/auth',authRoutes);
 app.use('/groups',groupRoutes);
-app.use('/rbac', rbacRoutes);
+app.use('/users', rbacRoutes);
+app.use('/expenses', expenseRoutes);
 
 
 
