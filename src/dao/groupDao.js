@@ -1,4 +1,4 @@
-const Group = require('../model/group');
+const Group = require('../models/group');
 
 const groupDao = {
 
@@ -8,15 +8,16 @@ const groupDao = {
     },
 
     updateGroup: async (data) => {
-        const { groupId, name, description, thumbnail, adminEmail, paymentStatus } = data;
+        const { _id, name, description, thumbnail, adminEmail, paymentStatus } = data;
+
         return await Group.findByIdAndUpdate(
-            groupId,
+            _id,   // ✅ FIX: use _id
             { name, description, thumbnail, adminEmail, paymentStatus },
             { new: true }
         );
     },
 
-    addMembers: async (groupId, ...membersEmail) => {
+    addMembers: async (groupId, membersEmail) => {
         return await Group.findByIdAndUpdate(
             groupId,
             { $addToSet: { membersEmail: { $each: membersEmail } } },
@@ -24,7 +25,7 @@ const groupDao = {
         );
     },
 
-    removeMembers: async (groupId, ...membersEmail) => {
+    removeMembers: async (groupId, membersEmail) => {
         return await Group.findByIdAndUpdate(
             groupId,
             { $pull: { membersEmail: { $in: membersEmail } } },
@@ -37,11 +38,11 @@ const groupDao = {
     },
 
     getGroupByStatusAndEmail: async (email, status) => {
-    return await Group.find({
-        membersEmail: email,
-        "paymentStatus.isPaid": status });
+        return await Group.find({
+            membersEmail: email,
+            "paymentStatus.isPaid": status
+        });
     },
-
 
     /**
      * Returns audit/settlement information
@@ -51,7 +52,24 @@ const groupDao = {
             paymentStatus: 1,
             _id: 0
         });
-    }
+    },
+
+    getGroupPaginated: async (
+        email,
+        limit,
+        skip,
+        sortOptions = { createdAt: -1 }
+    ) => {
+        const [groups, totalCount] = await Promise.all([
+            Group.find({ membersEmail: email })
+                .sort(sortOptions)
+                .skip(skip)
+                .limit(limit),
+            Group.countDocuments({ membersEmail: email }),
+        ]);
+
+        return { groups, totalCount };
+    },
 };
 
 module.exports = groupDao;

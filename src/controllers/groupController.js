@@ -1,4 +1,4 @@
-const groupDao = require("../dao/groupdao");
+const groupDao = require("../dao/groupDao");
 
 const groupController = {
 
@@ -21,7 +21,7 @@ const groupController = {
                 thumbnail,
                 paymentStatus: {
                     amount: 0,
-                    currency: 'INR',
+                    currency: "INR",
                     date: Date.now(),
                     isPaid: false
                 }
@@ -41,6 +41,10 @@ const groupController = {
     // PUT /update
     update: async (request, response) => {
         try {
+            if (!request.body._id) {
+                return response.status(400).json({ message: "Group ID required" });
+            }
+
             const updatedGroup = await groupDao.updateGroup(request.body);
 
             if (!updatedGroup) {
@@ -60,7 +64,11 @@ const groupController = {
         try {
             const { groupId, emails } = request.body;
 
-            const updatedGroup = await groupDao.addMembers(groupId, ...emails);
+            if (!Array.isArray(emails)) {
+                return response.status(400).json({ message: "emails must be an array" });
+            }
+
+            const updatedGroup = await groupDao.addMembers(groupId, emails);
             return response.status(200).json(updatedGroup);
 
         } catch (error) {
@@ -74,7 +82,11 @@ const groupController = {
         try {
             const { groupId, emails } = request.body;
 
-            const updatedGroup = await groupDao.removeMembers(groupId, ...emails);
+            if (!Array.isArray(emails)) {
+                return response.status(400).json({ message: "emails must be an array" });
+            }
+
+            const updatedGroup = await groupDao.removeMembers(groupId, emails);
             return response.status(200).json(updatedGroup);
 
         } catch (error) {
@@ -88,8 +100,30 @@ const groupController = {
         try {
             const email = request.user.email;
 
-            const groups = await groupDao.getGroupByEmail(email);
-            return response.status(200).json(groups);
+            const page = parseInt(request.query.page) || 1;
+            const limit = parseInt(request.query.limit) || 10;
+            const skip = (page - 1) * limit;
+
+            const sortBy = request.query.sortBy || "newest";
+
+            // ⚠️ MUST match schema field name
+            let sortOptions = { createdAt: -1 };
+            if (sortBy === "oldest") {
+                sortOptions = { createdAt: 1 };
+            }
+
+            const { groups, totalCount } =
+                await groupDao.getGroupPaginated(email, limit, skip, sortOptions);
+
+            return response.status(200).json({
+                groups,
+                pagination: {
+                    totalItems: totalCount,
+                    totalPages: Math.ceil(totalCount / limit),
+                    currentPage: page,
+                    itemsPerPage: limit
+                }
+            });
 
         } catch (error) {
             console.error(error);
@@ -100,11 +134,10 @@ const groupController = {
     // GET /status?isPaid=true|false
     getGroupsByPaymentStatus: async (request, response) => {
         try {
-            const { isPaid } = request.query;
-            const status = isPaid === 'true';
+            const status = request.query.isPaid === "true";
+            const email = request.user.email;
 
-           const email = request.user.email;
-           const groups = await groupDao.getGroupByStatusAndEmail(email, status);
+            const groups = await groupDao.getGroupByStatusAndEmail(email, status);
             return response.status(200).json(groups);
 
         } catch (error) {
