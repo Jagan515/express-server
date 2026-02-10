@@ -1,4 +1,4 @@
-const User = require("../model/User");
+const User = require("../models/User");
 const { generateTemporaryPassword } = require("../utility/passwordUtil");
 
 const rbacDao = {

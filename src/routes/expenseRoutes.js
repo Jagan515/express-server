@@ -31,11 +31,32 @@ router.get(
     expenseController.summary
 );
 
-// Settle group expenses
+// Settle entire group expenses
 router.post(
     '/group/:groupId/settle',
     authorizeMiddleware('groups:update'),
     expenseController.settle
+);
+
+//  NEW: Mark a single member as settled
+router.post(
+    '/group/:groupId/settle/member',
+    authorizeMiddleware('groups:update'),
+    expenseController.settleMember
+);
+
+//  NEW: Undo member settlement
+router.post(
+    '/group/:groupId/unsettle/member',
+    authorizeMiddleware('groups:update'),
+    expenseController.unsettleMember
+);
+
+// NEW: Update expense splits (Adjust modal)
+router.patch(
+    '/group/:groupId/splits',
+    authorizeMiddleware('groups:update'),
+    expenseController.updateSplits
 );
 
 module.exports = router;

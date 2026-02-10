@@ -1,5 +1,5 @@
 const expenseDao = require('../dao/expenseDao');
-const Group = require('../model/group');
+const Group = require('../models/group');
 const { calculateBalances } = require('../utility/expenseCalculator');
 
 const expenseController = {
@@ -31,7 +31,7 @@ const expenseController = {
 
         } catch (error) {
             console.log(error);
-            response.status(500).json({
+            return response.status(500).json({
                 message: 'Internal server error'
             });
         }
@@ -42,15 +42,31 @@ const expenseController = {
         try {
             const { groupId } = request.params;
 
+            if (!groupId) {
+                return response.status(400).json({
+                    message: 'Group ID is required'
+                });
+            }
+
+            const group = await Group.findById(groupId);
+            if (!group) {
+                return response.status(404).json({
+                    message: 'Group not found'
+                });
+            }
+
             const expenses = await expenseDao.getByGroupId(groupId);
+            const summary = calculateBalances(expenses);
 
             return response.status(200).json({
-                expenses
+                group,
+                expenses,
+                summary
             });
 
         } catch (error) {
             console.log(error);
-            response.status(500).json({
+            return response.status(500).json({
                 message: 'Internal server error'
             });
         }
@@ -61,6 +77,12 @@ const expenseController = {
         try {
             const { groupId } = request.params;
 
+            if (!groupId) {
+                return response.status(400).json({
+                    message: 'Group ID is required'
+                });
+            }
+
             const expenses = await expenseDao.getByGroupId(groupId);
             const balances = calculateBalances(expenses);
 
@@ -70,7 +92,7 @@ const expenseController = {
 
         } catch (error) {
             console.log(error);
-            response.status(500).json({
+            return response.status(500).json({
                 message: 'Internal server error'
             });
         }
@@ -81,16 +103,29 @@ const expenseController = {
         try {
             const { groupId } = request.params;
 
+            if (!groupId) {
+                return response.status(400).json({
+                    message: 'Group ID is required'
+                });
+            }
+
+            const group = await Group.findById(groupId);
+            if (!group) {
+                return response.status(404).json({
+                    message: 'Group not found'
+                });
+            }
+
             await expenseDao.deleteByGroupId(groupId);
 
-            await Group.findByIdAndUpdate(groupId, {
-                paymentStatus: {
-                    amount: 0,
-                    currency: 'INR',
-                    date: Date.now(),
-                    isPaid: true
-                }
-            });
+            group.paymentStatus = {
+                amount: 0,
+                currency: 'INR',
+                date: Date.now(),
+                isPaid: true
+            };
+
+            await group.save();
 
             return response.status(200).json({
                 message: 'Group settled successfully'
@@ -98,7 +133,85 @@ const expenseController = {
 
         } catch (error) {
             console.log(error);
-            response.status(500).json({
+            return response.status(500).json({
+                message: 'Internal server error'
+            });
+        }
+    },
+
+    // ✅ NEW: POST /expenses/group/:groupId/settle/member
+    settleMember: async (request, response) => {
+        try {
+            const { groupId } = request.params;
+            const { memberEmail } = request.body;
+
+            if (!groupId || !memberEmail) {
+                return response.status(400).json({
+                    message: 'Group ID and member email are required'
+                });
+            }
+
+            await expenseDao.markMemberSettled(groupId, memberEmail);
+
+            return response.status(200).json({
+                message: 'Member marked as settled'
+            });
+
+        } catch (error) {
+            console.log(error);
+            return response.status(500).json({
+                message: 'Internal server error'
+            });
+        }
+    },
+
+    // ✅ NEW: POST /expenses/group/:groupId/unsettle/member
+    unsettleMember: async (request, response) => {
+        try {
+            const { groupId } = request.params;
+            const { memberEmail } = request.body;
+
+            if (!groupId || !memberEmail) {
+                return response.status(400).json({
+                    message: 'Group ID and member email are required'
+                });
+            }
+
+            await expenseDao.unmarkMemberSettled(groupId, memberEmail);
+
+            return response.status(200).json({
+                message: 'Member settlement reverted'
+            });
+
+        } catch (error) {
+            console.log(error);
+            return response.status(500).json({
+                message: 'Internal server error'
+            });
+        }
+    },
+
+    // ✅ NEW: PATCH /expenses/group/:groupId/splits
+    updateSplits: async (request, response) => {
+        try {
+            const { groupId } = request.params;
+            const { splits } = request.body;
+
+            if (!groupId || !Array.isArray(splits)) {
+                return response.status(400).json({
+                    message: 'Group ID and valid splits are required'
+                });
+            }
+
+            await expenseDao.updateSplits(groupId, splits);
+
+            return response.status(200).json({
+                message: 'Expense splits updated successfully'
+            });
+
+        } catch (error) {
+            console.log(error);
+            return response.status(500).json({
                 message: 'Internal server error'
             });
         }

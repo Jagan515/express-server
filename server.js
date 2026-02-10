@@ -8,7 +8,8 @@ const authRoutes=require('./src/routes/authRoutes');
 const groupRoutes=require('./src/routes/groupRoutes');
 const cookieParser = require('cookie-parser');
 const expenseRoutes = require('./src/routes/expenseRoutes');
-
+const paymentsRoutes=require('./src/routes/paymentRoutes');
+const profileRoutes=require('./src/routes/profileRoutes');
 
 
 const cors=require('cors');
@@ -43,8 +44,8 @@ app.use('/auth',authRoutes);
 app.use('/groups',groupRoutes);
 app.use('/users', rbacRoutes);
 app.use('/expenses', expenseRoutes);
-
-
+app.use('/payments',paymentsRoutes);
+app.use('/profile',profileRoutes)
 
 
 app.listen(5001, () => {

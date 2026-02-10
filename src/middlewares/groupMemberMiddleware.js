@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const Group = require('../model/group');
+const Group = require('../models/group');
 
 const groupMemberMiddleware = async (request, response, next) => {
     try {

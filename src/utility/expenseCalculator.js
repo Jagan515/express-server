@@ -1,8 +1,4 @@
-/**
- * Calculate net balance per member for a group
- * Positive value  => member should receive money
- * Negative value  => member owes money
- */
+
 const calculateBalances = (expenses) => {
     const balances = {};
 
@@ -14,6 +10,9 @@ const calculateBalances = (expenses) => {
 
         // Each split member owes their share
         splits.forEach((split) => {
+    
+            if (split.isSettled === true) return;
+
             balances[split.memberEmail] =
                 (balances[split.memberEmail] || 0) - split.amount;
         });

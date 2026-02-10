@@ -15,18 +15,28 @@ const expenseSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    category: {
+        type: String,
+        required: true,
+        default: "Other"
+    },
     splits: [
-        {
-            memberEmail: {
-                type: String,
-                required: true
-            },
-            amount: {
-                type: Number,
-                required: true
-            }
+    {
+        memberEmail: {
+            type: String,
+            required: true
+        },
+        amount: {
+            type: Number,
+            required: true
+        },
+        isSettled: {
+            type: Boolean,
+            default: false
         }
-    ],
+    }
+],
+    
     excludedMembers: {
         type: [String],
         default: []
