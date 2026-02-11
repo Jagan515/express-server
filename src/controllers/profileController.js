@@ -1,3 +1,4 @@
+const { request } = require("express");
 const profileDao = require("../dao/profileDao");
 const jwt = require("jsonwebtoken");
 
@@ -69,6 +70,9 @@ const usersController={
                 .json({ message: "Internal server error" });
         }
     },
+
+    
+
 }
 
 module.exports = usersController;

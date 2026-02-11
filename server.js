@@ -1,54 +1,52 @@
-require('dotenv').config(); // npm install dotenv 
+require('dotenv').config();
 
-const express = require('express'); 
-// require() is used to import dependencies in CommonJS (Node.js).
-// It loads only what is needed, helping keep applications lightweight.
-const mongoose=require('mongoose');
-const authRoutes=require('./src/routes/authRoutes');
-const groupRoutes=require('./src/routes/groupRoutes');
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
 const cookieParser = require('cookie-parser');
+
+const authRoutes = require('./src/routes/authRoutes');
+const groupRoutes = require('./src/routes/groupRoutes');
 const expenseRoutes = require('./src/routes/expenseRoutes');
-const paymentsRoutes=require('./src/routes/paymentRoutes');
-const profileRoutes=require('./src/routes/profileRoutes');
-
-
-const cors=require('cors');
+const paymentsRoutes = require('./src/routes/paymentRoutes');
+const profileRoutes = require('./src/routes/profileRoutes');
 const rbacRoutes = require('./src/routes/rbacRoutes');
 
+mongoose
+  .connect(process.env.MONGO_DB_CONNECTION_URL)
+  .then(() => console.log('MongoDB Connected'))
+  .catch((error) => console.log('Could not connect MongoDB..', error));
 
-mongoose.connect(process.env.MONGO_DB_CONNECTION_URL) // mongoose 27017 default port
-.then(()=> console.log('MongoDB Connected'))
-.catch((error)=> console.log('Could not connect MongoDB..',error));
-
-const corsOption={
-    origin:process.env.CLIENT_URL,
-    credentials:true
+const corsOption = {
+  origin: process.env.CLIENT_URL,
+  credentials: true,
 };
-
-
-
-
 
 const app = express();
 
-
 app.use(cors(corsOption));
 
+/*
+  Apply express.json() to all routes
+  EXCEPT /payments/webhook
+*/
+app.use((request, response, next) => {
+  if (request.originalUrl.startsWith('/payments/webhook')) {
+    return next(); 
+  }
 
-// Middleware to parse incoming JSON requests into JavaScript objects
-app.use(express.json());// middleware
-app.use(cookieParser());//Middleware
-
-
-app.use('/auth',authRoutes);
-app.use('/groups',groupRoutes);
-app.use('/users', rbacRoutes);
-app.use('/expenses', expenseRoutes);
-app.use('/payments',paymentsRoutes);
-app.use('/profile',profileRoutes)
-
-
-app.listen(5001, () => {
-    console.log('Server is running on port 5001');
+  express.json()(request, response, next);
 });
 
+app.use(cookieParser());
+
+app.use('/auth', authRoutes);
+app.use('/groups', groupRoutes);
+app.use('/users', rbacRoutes);
+app.use('/expenses', expenseRoutes);
+app.use('/payments', paymentsRoutes);
+app.use('/profile', profileRoutes);
+
+app.listen(5001, () => {
+  console.log('Server is running on port 5001');
+});
