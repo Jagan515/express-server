@@ -21,7 +21,19 @@ mongoose
   .catch((error) => console.log('Could not connect MongoDB..', error));
 
 const corsOption = {
-  origin: process.env.CLIENT_URL,
+  origin: (origin, callback) => {
+    // If no origin (like mobile apps or curl), allow it
+    if (!origin) return callback(null, true);
+
+    const clientUrl = process.env.CLIENT_URL?.replace(/\/$/, "");
+    const requestOrigin = origin.replace(/\/$/, "");
+
+    if (requestOrigin === clientUrl || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
 };
 
