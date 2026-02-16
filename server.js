@@ -14,6 +14,25 @@ const rbacRoutes = require('./src/routes/rbacRoutes');
 
 const app = express();
 
+const corsOption = {
+  origin: (origin, callback) => {
+    // If no origin (like mobile apps or curl), allow it
+    if (!origin) return callback(null, true);
+
+    const clientUrl = process.env.CLIENT_URL?.replace(/\/$/, "");
+    const requestOrigin = origin.replace(/\/$/, "");
+
+    if (requestOrigin === clientUrl || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOption));
+
 /* MongoDB Connection Management */
 let isConnected = false;
 
@@ -37,25 +56,6 @@ const connectToDatabase = async (req, res, next) => {
 
 // Ensure database is connected before any routing
 app.use(connectToDatabase);
-
-const corsOption = {
-  origin: (origin, callback) => {
-    // If no origin (like mobile apps or curl), allow it
-    if (!origin) return callback(null, true);
-
-    const clientUrl = process.env.CLIENT_URL?.replace(/\/$/, "");
-    const requestOrigin = origin.replace(/\/$/, "");
-
-    if (requestOrigin === clientUrl || process.env.NODE_ENV !== 'production') {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-};
-
-app.use(cors(corsOption));
 
 /*
   Apply express.json() to all routes
