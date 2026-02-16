@@ -12,6 +12,9 @@ const paymentsRoutes = require('./src/routes/paymentRoutes');
 const profileRoutes = require('./src/routes/profileRoutes');
 const rbacRoutes = require('./src/routes/rbacRoutes');
 
+const app = express();
+
+/* MongoDB Connection */
 mongoose
   .connect(process.env.MONGO_DB_CONNECTION_URL)
   .then(() => console.log('MongoDB Connected'))
@@ -22,8 +25,6 @@ const corsOption = {
   credentials: true,
 };
 
-const app = express();
-
 app.use(cors(corsOption));
 
 /*
@@ -32,9 +33,8 @@ app.use(cors(corsOption));
 */
 app.use((request, response, next) => {
   if (request.originalUrl.startsWith('/payments/webhook')) {
-    return next(); 
+    return next();
   }
-
   express.json()(request, response, next);
 });
 
@@ -47,6 +47,5 @@ app.use('/expenses', expenseRoutes);
 app.use('/payments', paymentsRoutes);
 app.use('/profile', profileRoutes);
 
-app.listen(5001, () => {
-  console.log('Server is running on port 5001');
-});
+/* Export instead of listen */
+module.exports = app;
