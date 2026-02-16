@@ -14,11 +14,29 @@ const rbacRoutes = require('./src/routes/rbacRoutes');
 
 const app = express();
 
-/* MongoDB Connection */
-mongoose
-  .connect(process.env.MONGO_DB_CONNECTION_URL)
-  .then(() => console.log('MongoDB Connected'))
-  .catch((error) => console.log('Could not connect MongoDB..', error));
+/* MongoDB Connection Management */
+let isConnected = false;
+
+const connectToDatabase = async (req, res, next) => {
+  if (isConnected) {
+    return next();
+  }
+
+  try {
+    await mongoose.connect(process.env.MONGO_DB_CONNECTION_URL, {
+      serverSelectionTimeoutMS: 5000,
+    });
+    isConnected = true;
+    console.log('MongoDB Connected');
+    next();
+  } catch (error) {
+    console.log('Could not connect MongoDB..', error);
+    res.status(500).json({ error: 'Database connection failed' });
+  }
+};
+
+// Ensure database is connected before any routing
+app.use(connectToDatabase);
 
 const corsOption = {
   origin: (origin, callback) => {
