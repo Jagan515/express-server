@@ -2,11 +2,14 @@ const { request } = require("express");
 const profileDao = require("../dao/profileDao");
 const jwt = require("jsonwebtoken");
 
-const usersController={
+const usersController = {
     getUserInfo: async (request, response) => {
         try {
             const email = request.user.email;
             const user = await profileDao.findByEmail(email);
+            console.log("---- PROFILE API CALLED ----");
+            console.log("User subscription from DB:", user.subscription);
+
 
             return response.json({ user });
         } catch (error) {
@@ -39,7 +42,7 @@ const usersController={
                 });
             }
 
-            
+
             const token = jwt.sign(
                 {
                     _id: user._id,
@@ -71,7 +74,7 @@ const usersController={
         }
     },
 
-    
+
 
 }
 

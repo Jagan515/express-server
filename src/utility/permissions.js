@@ -11,7 +11,8 @@ const permissions = {
         'groups:delete',
         'groups:view',
         'payment:create',
-        'profile:update'
+        'profile:update',
+        'payment:cancel'
     ],
     [MANAGER_ROLE]: [
         'users:view',

@@ -139,7 +139,7 @@ const expenseController = {
         }
     },
 
-    // ✅ NEW: POST /expenses/group/:groupId/settle/member
+    // NEW: POST /expenses/group/:groupId/settle/member
     settleMember: async (request, response) => {
         try {
             const { groupId } = request.params;
@@ -165,7 +165,7 @@ const expenseController = {
         }
     },
 
-    // ✅ NEW: POST /expenses/group/:groupId/unsettle/member
+    // NEW: POST /expenses/group/:groupId/unsettle/member
     unsettleMember: async (request, response) => {
         try {
             const { groupId } = request.params;
@@ -191,7 +191,7 @@ const expenseController = {
         }
     },
 
-    // ✅ NEW: PATCH /expenses/group/:groupId/splits
+    // NEW: PATCH /expenses/group/:groupId/splits
     updateSplits: async (request, response) => {
         try {
             const { groupId } = request.params;

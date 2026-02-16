@@ -44,5 +44,17 @@ router.post(
   authorizeMiddleware('payment:create'),
   paymentsController.captureSubscription
 );
+console.log("handleWebhookEvents:", paymentsController.handleWebhookEvents);
+console.log("express.raw:", typeof express.raw);
+
+console.log("cancelSubscription:", paymentsController.cancelSubscription);
+console.log("authorizeMiddleware:", authorizeMiddleware);
+
+router.post(
+  "/cancel-subscription",
+  authorizeMiddleware('payment:cancel'),
+  paymentsController.cancelSubscription
+);
+
 
 module.exports = router;
