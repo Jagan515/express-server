@@ -19,10 +19,9 @@ const corsOption = {
     // If no origin (like mobile apps or curl), allow it
     if (!origin) return callback(null, true);
 
-    const clientUrl = process.env.CLIENT_URL?.replace(/\/$/, "");
-    const requestOrigin = origin.replace(/\/$/, "");
+    const clientUrl = process.env.CLIENT_URL;
 
-    if (requestOrigin === clientUrl || process.env.NODE_ENV !== 'production') {
+    if (origin === clientUrl || process.env.NODE_ENV !== 'production') {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -35,6 +34,10 @@ app.use(cors(corsOption));
 
 /* MongoDB Connection Management */
 let isConnected = false;
+
+
+
+
 
 const connectToDatabase = async (req, res, next) => {
   if (isConnected) {
