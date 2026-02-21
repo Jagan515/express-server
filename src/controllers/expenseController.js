@@ -8,7 +8,7 @@ const expenseController = {
     add: async (request, response) => {
         try {
             const user = request.user;
-            const { groupId, amount, splits, excludedMembers = [] } = request.body;
+            const { groupId, amount, splits, excludedMembers = [], category } = request.body;
 
             if (!groupId || !amount || !splits || !Array.isArray(splits)) {
                 return response.status(400).json({
@@ -20,6 +20,7 @@ const expenseController = {
                 groupId,
                 paidBy: user.email,
                 amount,
+                category,
                 splits,
                 excludedMembers
             });
