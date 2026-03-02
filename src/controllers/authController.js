@@ -8,6 +8,17 @@ const emailService = require('../services/emailService');
 
 const authController = {
 
+    getCookieOptions: (isLogout = false) => {
+        const isProduction = process.env.NODE_ENV === 'production';
+        return {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: isProduction ? 'none' : 'lax',
+            path: '/',
+            expires: isLogout ? new Date(0) : undefined
+        };
+    },
+
     login: async (request, response) => {
         const errors = validationResult(request);
         if (!errors.isEmpty()) {
@@ -55,12 +66,7 @@ const authController = {
                 { expiresIn: '7d' }
             );
 
-            const cookieOptions = {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-                path: '/'
-            };
+            const cookieOptions = authController.getCookieOptions();
 
             response.cookie('jwtToken', token, cookieOptions);
             response.cookie('refreshToken', refreshToken, cookieOptions);
@@ -190,12 +196,9 @@ const authController = {
                     { expiresIn: '15m' }
                 );
 
-                response.cookie('jwtToken', newToken, {
-                    httpOnly: true,
-                    secure: process.env.NODE_ENV === 'production',
-                    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-                    path: '/'
-                });
+                const cookieOptions = authController.getCookieOptions();
+
+                response.cookie('jwtToken', newToken, cookieOptions);
 
                 return response.status(200).json({
                     message: 'Token refreshed'
@@ -212,8 +215,9 @@ const authController = {
 
     logout: async (request, response) => {
         try {
-            response.clearCookie('jwtToken', { path: '/' });
-            response.clearCookie('refreshToken', { path: '/' });
+            const cookieOptions = authController.getCookieOptions(true); // Get options to clear cookies
+            response.clearCookie('jwtToken', cookieOptions);
+            response.clearCookie('refreshToken', cookieOptions);
             return response.json({
                 message: 'Logout successful'
             });
@@ -278,12 +282,7 @@ const authController = {
                 { expiresIn: '7d' }
             );
 
-            const cookieOptions = {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-                path: '/'
-            };
+            const cookieOptions = authController.getCookieOptions();
 
             response.cookie('jwtToken', token, cookieOptions);
             response.cookie('refreshToken', refreshToken, cookieOptions);
