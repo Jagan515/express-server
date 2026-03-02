@@ -26,7 +26,7 @@ const authController = {
                 });
             }
 
-            // 🔹 Backward compatibility
+            //  Backward compatibility
             user.role = user.role ? user.role : ADMIN_ROLE;
             user.adminId = user.adminId ? user.adminId : user._id;
 
@@ -46,15 +46,24 @@ const authController = {
                     adminId: user.adminId
                 },
                 process.env.JWT_SECRET,
-                { expiresIn: '1h' }
+                { expiresIn: '15m' }
             );
 
-            response.cookie('jwtToken', token, {
+            const refreshToken = jwt.sign(
+                { _id: user._id },
+                process.env.REFRESH_SECRET,
+                { expiresIn: '7d' }
+            );
+
+            const cookieOptions = {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
                 path: '/'
-            });
+            };
+
+            response.cookie('jwtToken', token, cookieOptions);
+            response.cookie('refreshToken', refreshToken, cookieOptions);
 
             return response.status(200).json({
                 message: 'User authenticated',
@@ -145,9 +154,66 @@ const authController = {
         }
     },
 
+    refreshAccessToken: async (request, response) => {
+        try {
+            const refreshToken = request.cookies?.refreshToken;
+
+            if (!refreshToken) {
+                return response.status(401).json({
+                    message: 'Refresh token missing'
+                });
+            }
+
+            jwt.verify(refreshToken, process.env.REFRESH_SECRET, async (error, decoded) => {
+                if (error) {
+                    return response.status(401).json({
+                        message: 'Invalid refresh token'
+                    });
+                }
+
+                const user = await userDao.findById(decoded._id);
+                if (!user) {
+                    return response.status(401).json({
+                        message: 'User not found'
+                    });
+                }
+
+                const newToken = jwt.sign(
+                    {
+                        _id: user._id,
+                        name: user.name,
+                        email: user.email,
+                        role: user.role,
+                        adminId: user.adminId
+                    },
+                    process.env.JWT_SECRET,
+                    { expiresIn: '15m' }
+                );
+
+                response.cookie('jwtToken', newToken, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+                    path: '/'
+                });
+
+                return response.status(200).json({
+                    message: 'Token refreshed'
+                });
+            });
+
+        } catch (error) {
+            console.log(error);
+            return response.status(500).json({
+                message: 'Internal server error'
+            });
+        }
+    },
+
     logout: async (request, response) => {
         try {
-            response.clearCookie('jwtToken');
+            response.clearCookie('jwtToken', { path: '/' });
+            response.clearCookie('refreshToken', { path: '/' });
             return response.json({
                 message: 'Logout successful'
             });
@@ -190,7 +256,7 @@ const authController = {
                 });
             }
 
-            // 🔹 Backward compatibility
+            //  Backward compatibility
             user.role = user.role ? user.role : ADMIN_ROLE;
             user.adminId = user.adminId ? user.adminId : user._id;
 
@@ -203,15 +269,24 @@ const authController = {
                     adminId: user.adminId
                 },
                 process.env.JWT_SECRET,
-                { expiresIn: '1h' }
+                { expiresIn: '15m' }
             );
 
-            response.cookie('jwtToken', token, {
+            const refreshToken = jwt.sign(
+                { _id: user._id },
+                process.env.REFRESH_SECRET,
+                { expiresIn: '7d' }
+            );
+
+            const cookieOptions = {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
                 path: '/'
-            });
+            };
+
+            response.cookie('jwtToken', token, cookieOptions);
+            response.cookie('refreshToken', refreshToken, cookieOptions);
 
             return response.status(200).json({
                 message: 'User authenticated',

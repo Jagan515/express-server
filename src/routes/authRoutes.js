@@ -9,6 +9,7 @@ router.post('/login', loginValidator, authController.login);
 router.post('/logout', authController.logout);
 router.post('/is-user-logged-in', authController.isUserLoggedIn);
 router.post('/google-auth', authController.googleSso);
+router.post('/refresh-token', authController.refreshAccessToken);
 router.post('/reset-password', authController.resetPassword);
 router.post('/change-password', resetPasswordValidator, authController.changePassword);
 
