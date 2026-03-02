@@ -10,13 +10,15 @@ const authController = {
 
     getCookieOptions: (isLogout = false) => {
         const isProduction = process.env.NODE_ENV === 'production';
-        return {
+        const options = {
             httpOnly: true,
             secure: isProduction,
             sameSite: isProduction ? 'none' : 'lax',
             path: '/',
             expires: isLogout ? new Date(0) : undefined
         };
+        console.log(`Cookie Options (isProduction: ${isProduction}):`, options);
+        return options;
     },
 
     login: async (request, response) => {
